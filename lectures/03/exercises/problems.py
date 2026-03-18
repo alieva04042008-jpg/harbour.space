@@ -38,12 +38,20 @@ class Countdown:
     """
 
     def __init__(self, n: int) -> None:
+        self.current = n
+        self.limit = 0
         raise NotImplementedError
 
     def __iter__(self) -> Iterator[int]:
+        return self
         raise NotImplementedError
 
     def __next__(self) -> int:
+        if self.limt < 0:
+            raise StopIteration
+        value = self.current
+        self.current -= 1
+        return value
         raise NotImplementedError
 
 
@@ -62,12 +70,19 @@ class StepIterator:
     """
 
     def __init__(self, values: list[Any], step: int = 2) -> None:
-        raise NotImplementedError
+        self.values = values
+        self.step = step
+        self.current = values[0]
+        self.limit = values[-1]
+        if step <= 0:
+            raise ValueError
 
     def __iter__(self) -> Iterator[Any]:
+        return self
         raise NotImplementedError
 
     def __next__(self) -> Any:
+        
         raise NotImplementedError
 
 
