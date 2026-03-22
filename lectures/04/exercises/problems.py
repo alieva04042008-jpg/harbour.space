@@ -21,9 +21,20 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from typing import Any
+import time
+from functools import wraps
 
 
 def log_calls(func: Callable[..., Any]) -> Callable[..., Any]:
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        args_str = ", ".join(str(a) for a in args)
+        kwargs_str = ", ".join(f"{k}={v}" for k, v in kwargs.items())
+        all_args = ", ".join(filter(None, [args_str, kwargs_str]))
+        print(f"{func.__name__}({all_args}) -> {result}")
+        return result
+    return wrapper
+    
     """Problem 1. `log_calls` decorator.
 
     Print each function call in this format:
@@ -46,6 +57,15 @@ def log_calls(func: Callable[..., Any]) -> Callable[..., Any]:
 
 
 def measure_time(func: Callable[..., Any]) -> Callable[..., Any]:
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        elapsed = time.perf_counter() - start
+        mil = elapsed * 1000
+        print(f"Executed in {mil:.4f} ms")
+        return result
+    return wrapper
     """Problem 2. `measure_time` decorator.
 
     Measure function execution time and print:
@@ -66,6 +86,12 @@ def measure_time(func: Callable[..., Any]) -> Callable[..., Any]:
 
 
 def count_calls(func: Callable[..., Any]) -> Callable[..., Any]:
+    def wrapper(*args, **kwargs):
+        wrapper.calls += 1
+        result = func(*args, **kwargs)
+        return result
+    wrapper.calls = 0
+    return wrapper
     """Problem 3. `count_calls` decorator.
 
     Count how many times the wrapped function is called.
@@ -84,6 +110,13 @@ def count_calls(func: Callable[..., Any]) -> Callable[..., Any]:
 
 
 def ensure_non_negative(func: Callable[..., Any]) -> Callable[..., Any]:
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        if result < 0:
+            raise ValueError
+        return result 
+    return wrapper
+        
     """Problem 4. `ensure_non_negative` decorator.
 
     Raise `ValueError` when the decorated function returns a negative number.
@@ -115,13 +148,49 @@ class Retry:
     """
 
     def __init__(self, times: int) -> None:
-        raise NotImplementedError
+        self.times = times
+        if self.times < 0:
+            raise ValueError 
 
     def __call__(self, func: Callable[..., Any]) -> Callable[..., Any]:
-        raise NotImplementedError
+        def wrapper(*args, **kwargs):
+            try:
+                result = func(*args, **kwargs)
+                return result
+            except Exception as e:
+                last_exaption = e
+                for _ in range(self.times):
+                    try:
+                        result = func(*args, **kwargs)
+                        return result
+                    except Exception as e:
+                        last_exaption = e
+                        pass
+                raise last_exaption
+        return wrapper
+            
+        
 
 
 class Throttle:
+    def __init__(self, interval):
+        if interval < 0:
+            raise ValueError
+        self.interval = interval
+        self.last_call = None 
+        
+        
+    def __call__(self, func):
+        def wrapper(*args, **kwargs):
+            start = time.perf_counter()
+            if self.last_call != None and start - self.last_call < self.interval:
+                raise RuntimeError
+            self.last_call = start
+            result = func(*args, **kwargs)
+            return result
+        return wrapper
+            
+            
     """Problem 6. `Throttle(interval)` class decorator.
 
     Implement this as a class with:
@@ -160,6 +229,21 @@ class Throttle:
 
 
 class CallLimit:
+    def __init__(self, limit):
+        if limit < 0:
+            raise ValueError
+        self.limit = limit
+        
+    def __call__(self, func):
+        def wrapper(*args, **kwargs):
+            if wrapper.calls >= self.limit:
+                raise RuntimeError
+            wrapper.calls += 1
+            result = func(*args, **kwargs)
+            return result
+        wrapper.calls = 0
+        return wrapper
+        
     """Problem 7 (advanced). `CallLimit(limit)` class decorator.
 
     Implement this as a class with:

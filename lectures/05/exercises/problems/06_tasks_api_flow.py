@@ -18,24 +18,31 @@ app = FastAPI()
 
 class TaskIn(BaseModel):
     # TODO: add fields
-    pass
+    title: str
+    completed: bool = False
 
 
 class TaskOut(BaseModel):
     # TODO: add id + task fields
-    pass
+    id: int
+    title: str
+    completed: bool
 
 
 # TODO: create in-memory storage and next_id counter
-
+storage: list[TaskOut] = []
+next_id: int = 1
 
 @app.post("/tasks", response_model=TaskOut, status_code=status.HTTP_201_CREATED)
 def create_task(payload: TaskIn) -> TaskOut:
     # TODO: create/store/return task
-    raise NotImplementedError
+    return storage
 
 
 @app.get("/tasks", response_model=list[TaskOut])
 def get_tasks() -> list[TaskOut]:
     # TODO: return all tasks
-    raise NotImplementedError
+    for task in storage:
+        if task.id == task.id:
+            return task
+    raise HTTPException(status_code=404, detail="Task not found")

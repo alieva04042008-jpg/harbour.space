@@ -20,8 +20,11 @@ SENDER_NAME = "replace-with-your-name"
 
 def main() -> None:
     # TODO: implement input loop and POST sending
-    pass
-
+    while True:
+        text = input("Massege: ")
+        response = requests.post( f"{TARGET_BASE_URL}/messages",
+            json={"sender": SENDER_NAME, "text": text})
+        print(f"Status: {response.status_code}")
 
 if __name__ == "__main__":
     main()

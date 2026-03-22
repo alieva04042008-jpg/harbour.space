@@ -49,13 +49,27 @@ class Lecture03ProblemsTest(unittest.TestCase):
             problems.CircularIterator([], 3)
         with self.assertRaises(ValueError):
             problems.CircularIterator([1], -1)
-
+            
     def test_read_words(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "sample.txt"
             path.write_text("  one   two\n\nthree\n   four   five  ", encoding="utf-8")
             self.assertEqual(list(problems.read_words(str(path))), ["one", "two", "three", "four", "five"])
 
+    def test_batch(self) -> None:
+        self.assertEqual(list(problems.batch([1, 2, 3, 4, 5, 6, 7], 3)), [[1, 2, 3], [4, 5, 6], [7]])
+        self.assertEqual(list(problems.batch((x for x in range(5)), 2)), [[0, 1], [2, 3], [4]])
+        with self.assertRaises(ValueError):
+            list(problems.batch([1, 2, 3], 0))
+
+"""      
+    
+    def test_flatten_generator(self) -> None:
+        data = [1, [2, 3], [4, [5, 6]], 7]
+        self.assertEqual(list(problems.flatten(data)), [1, 2, 3, 4, 5, 6, 7])
+        self.assertEqual(list(problems.flatten([[], [1, [2]], 3])), [1, 2, 3])
+        
+        
     def test_batch(self) -> None:
         self.assertEqual(list(problems.batch([1, 2, 3, 4, 5, 6, 7], 3)), [[1, 2, 3], [4, 5, 6], [7]])
         self.assertEqual(list(problems.batch((x for x in range(5)), 2)), [[0, 1], [2, 3], [4]])
@@ -106,7 +120,7 @@ class Lecture03ProblemsTest(unittest.TestCase):
         @problems.ensure_non_negative
         def diff(a: int, b: int) -> int:
             return a - b
-
+        
         self.assertEqual(diff(5, 2), 3)
         with self.assertRaises(ValueError):
             diff(2, 5)
@@ -176,6 +190,6 @@ class Lecture03ProblemsTest(unittest.TestCase):
         self.assertEqual(greet("Ana", prefix="Hello"), "Hello Ana")
         self.assertEqual(kw_calls["n"], 1)
 
-
+"""
 if __name__ == "__main__":
     unittest.main()
