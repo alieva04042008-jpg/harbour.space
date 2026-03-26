@@ -19,9 +19,9 @@ def main() -> None:
     cur = conn.cursor()
 
     # TODO 1: age >= 22
-    cur.execute("SELECT * FROM students WHERE age >= 21")
-    age_21 = cur.fetchall()
-    for ages in age_21:
+    cur.execute("SELECT * FROM students WHERE age >= 22")
+    age_22 = cur.fetchall()
+    for ages in age_22:
         print(ages)
     # TODO 2 + 3: order by age desc, limit 3
     cur.execute("SELECT * FROM students ORDER BY age DESC LIMIT 3")

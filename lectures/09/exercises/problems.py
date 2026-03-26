@@ -9,10 +9,10 @@ names -> references -> objects
 from __future__ import annotations
 
 from collections.abc import Callable
-
-
+import sys
+import copy 
+""""
 def extract_opnames(source: str) -> list[str]:
-    """Mission 1 (Optional): inspect bytecode produced from source text.
 
     Goal:
         Show that Python executes bytecode instructions.
@@ -25,11 +25,16 @@ def extract_opnames(source: str) -> list[str]:
     Example:
         source = "x = 2 + 3\\nprint(x)"
         output shape: ["RESUME", "LOAD_CONST", ...]
-    """
+
     raise NotImplementedError
 
-
+"""
 def aliasing_after_append() -> tuple[list[int], list[int], bool]:
+    a = [1, 2]
+    b = a
+    b.append(3)
+    same_identity = id(a) == id(b)
+    return(a, b, same_identity)
     """Mission 2: demonstrate aliasing (two names, one list object).
 
     Build:
@@ -47,6 +52,11 @@ def aliasing_after_append() -> tuple[list[int], list[int], bool]:
 
 
 def copy_after_append() -> tuple[list[int], list[int], bool]:
+    a = [1, 2]
+    b = a.copy()
+    b.append(3)
+    same_identity = False
+    return(a, b, same_identity)
     """Mission 3: show how shallow copy avoids top-level aliasing.
 
     Build:
@@ -64,6 +74,11 @@ def copy_after_append() -> tuple[list[int], list[int], bool]:
 
 
 def rebind_after_concat() -> tuple[list[int], list[int], bool]:
+    a = [1, 2]
+    b = a
+    b = b + [3]
+    same_identity = False
+    return(a, b, same_identity)
     """Mission 4: compare rebinding with in-place mutation.
 
     Build:
@@ -82,6 +97,13 @@ def rebind_after_concat() -> tuple[list[int], list[int], bool]:
 
 
 def refcount_steps() -> tuple[int, int, int]:
+    a = []
+    start_count = sys.getrefcount(a)
+    b = a
+    with_alias_count = sys.getrefcount(a)
+    del b 
+    after_delete_count = sys.getrefcount(a)
+    return start_count, with_alias_count, after_delete_count
     """Mission 5: track reference count changes when aliasing.
 
     Use `sys.getrefcount(obj)` to measure one object's refcount in three moments:
@@ -95,12 +117,19 @@ def refcount_steps() -> tuple[int, int, int]:
     Expected relation:
         with_alias_count == start_count + 1
         after_delete_count == start_count
-    """
+    
     raise NotImplementedError
-
+    """
 
 def make_incrementer(start: int = 0) -> Callable[[], int]:
-    """Mission 6: build a stateful closure with `nonlocal`.
+    current = start
+    def f():
+        nonlocal current
+        current += 1
+        return current
+    return f
+"""
+    Mission 6: build a stateful closure with `nonlocal`.
 
     Return a function that:
         - remembers internal value starting from `start`
@@ -111,12 +140,11 @@ def make_incrementer(start: int = 0) -> Callable[[], int]:
         inc = make_incrementer(10)
         inc() -> 11
         inc() -> 12
-    """
+    
     raise NotImplementedError
 
 
 def inject_with_exec(namespace: dict[str, object], statement: str) -> dict[str, object]:
-    """Mission 7 (Optional): inject names dynamically using `exec`.
 
     Execute `statement` in the provided `namespace` dictionary.
     Return the same dictionary object after execution.
@@ -125,11 +153,17 @@ def inject_with_exec(namespace: dict[str, object], statement: str) -> dict[str, 
         ns = {}
         inject_with_exec(ns, "x = 42")
         ns["x"] == 42
-    """
+    
     raise NotImplementedError
 
-
+"""
 def function_locals_snapshot() -> dict[str, int]:
+    def d():
+        a = 10 
+        b = 20
+        return dict(locals())
+    r = d()
+    return r
     """Mission 8: capture local namespace from inside a function.
 
     Build an inner function where:
@@ -139,7 +173,7 @@ def function_locals_snapshot() -> dict[str, int]:
     Return `dict(locals())` from that inner function.
     Expected output shape: {"a": 10, "b": 20}
     """
-    raise NotImplementedError
+
 
 
 def cycle_collected() -> bool:
@@ -156,6 +190,11 @@ def cycle_collected() -> bool:
 
 
 def shallow_vs_deep_copy_state() -> tuple[list[list[int]], list[list[int]], list[list[int]]]:
+    original = [[1], [2]]
+    shallow = original.copy()
+    deep = copy.deepcopy(original)
+    shallow[0].append(99)
+    return original, shallow, deep
     """Mission 10: compare shallow vs deep copy for nested lists.
 
     Build:
