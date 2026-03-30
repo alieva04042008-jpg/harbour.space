@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-
+import threading
 
 def simulated_long_fetch(value: object) -> object:
     """Helper function: Simulate a slow blocking fetch and return the same input value."""
@@ -25,6 +25,19 @@ async def async_simulated_long_fetch(value: object) -> object:
 
 
 def locked_counter_total(num_threads: int, increments_per_thread: int) -> int:
+    counter = 0
+    lock = threading.Lock()
+    def worker():
+        nonlocal counter
+        for _ in range(increments_per_thread):
+            with lock:
+                counter += 1
+    threads = [threading.Thread(target = worker) for _ in range(num_threads)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()       
+    return counter
     """Mission 1: thread-safe counter increment with `threading.Lock`.
 
     Required functions/classes:
@@ -39,6 +52,22 @@ def locked_counter_total(num_threads: int, increments_per_thread: int) -> int:
 
 
 def threaded_square_map(values: list[int]) -> list[int]:
+    result = [0] * len(values)
+    threads = []
+
+    def worker(i):
+        result[i] = values[i] ** 2
+
+    for i in range(len(values)):
+        t = threading.Thread(target=worker, args=(i,))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
+    return result    
+            
     """Mission 2: compute squares using one thread per element.
 
     Required functions/classes:
@@ -55,6 +84,27 @@ def threaded_square_map(values: list[int]) -> list[int]:
 
 
 def threadpool_sleep_map(delays: list[float], max_workers: int = 4) -> list[float]:
+    if max_workers < 1:
+        raise ValueError
+
+    results = [None] * len(delays)
+    semaphore = threading.Semaphore(max_workers)
+    threads = []
+
+    def worker(index, delay):
+        with semaphore:
+            results[index] = simulated_long_fetch(delay)
+
+    for i, delay in enumerate(delays):
+        t = threading.Thread(target=worker, args=(i, delay))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
+    return results
+    
     """Mission 3: simulate blocking I/O with `ThreadPoolExecutor`.
 
     Requirements:
@@ -65,8 +115,15 @@ def threadpool_sleep_map(delays: list[float], max_workers: int = 4) -> list[floa
     """
     raise NotImplementedError
 
-
+from concurrent.futures import ProcessPoolExecutor
+def square(x: int) -> int:
+    return x * x
 def processpool_square_map(values: list[int], max_workers: int = 2) -> list[int]:
+    if max_workers < 1:
+        raise ValueError
+
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        return list(executor.map(square, values))
     """Mission 4: compute squares with `ProcessPoolExecutor`.
 
     Requirements:
@@ -75,10 +132,17 @@ def processpool_square_map(values: list[int], max_workers: int = 2) -> list[int]
         - Return squared values in the same order as input.
         - Raise `ValueError` if `max_workers < 1`.
     """
-    raise NotImplementedError
 
-
+import asyncio
 async def async_tag_fetch(labels: list[str], delay: float = 0.01) -> list[str]:
+    async def worker(label):
+        await async_simulated_long_fetch(label)
+        return f"done:{label}"
+
+    tasks = [worker(label) for label in labels]
+    results = await asyncio.gather(*tasks)
+
+    return results
     """Mission 5: run async tasks concurrently with `asyncio.gather`.
 
     Required functions:
@@ -95,6 +159,11 @@ async def async_tag_fetch(labels: list[str], delay: float = 0.01) -> list[str]:
 
 
 async def async_blocking_double(values: list[int]) -> list[int]:
+    async def worker(value: int) -> int:
+        await asyncio.to_thread(simulated_long_fetch, value)
+        return value * 2
+
+    return await asyncio.gather(*(worker(value) for value in values))
     """Mission 6: bridge blocking work into async flow.
 
     Required functions:
